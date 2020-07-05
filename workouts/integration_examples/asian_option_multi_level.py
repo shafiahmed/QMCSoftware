@@ -3,7 +3,6 @@ Multi level Asian Option
 python workouts/integration_examples/asian_option_multi_level.py  > outputs/integration_examples/asian_option_multi_level.log
 """
 
-from numpy import arange
 from qmcpy import *
 
 bar = '\n'+'~'*100+'\n'
@@ -18,7 +17,7 @@ def asian_option_multi_level(
     
     print(bar)
 
-    # CLT
+    # CubMCCLT
     distribution = IIDStdGaussian(seed=7)
     measure = BrownianMotion(distribution)
     integrand = AsianCall(
@@ -29,10 +28,8 @@ def asian_option_multi_level(
         interest_rate = interest_rate,
         mean_type = mean_type,
         multi_level_dimensions = [4,16,64])
-    solution,data = CLT(integrand, abs_tol=abs_tol).integrate()
+    solution,data = CubMCCLT(integrand, abs_tol=abs_tol).integrate()
     print('%s%s'%(data,bar))
 
-
 if __name__ == "__main__":
-    
-    asian_option_multi_level()
+    asian_option_multi_level(abs_tol=.025)

@@ -10,6 +10,32 @@ class Lattice(DiscreteDistribution):
     """
     Quasi-Random Lattice nets in base 2.
     
+    >>> l = Lattice(2,seed=7)
+    >>> l
+    Lattice (DiscreteDistribution Object)
+        dimension       2^(1)
+        randomize       1
+        seed            7
+        backend         gail
+        mimics          StdUniform
+    >>> l.gen_samples(4)
+    array([[0.076, 0.78 ],
+           [0.576, 0.28 ],
+           [0.326, 0.03 ],
+           [0.826, 0.53 ]])
+    >>> l.set_dimension(3)
+    >>> l.gen_samples(n_min=4,n_max=8)
+    array([[0.563, 0.348, 0.103],
+           [0.063, 0.848, 0.603],
+           [0.813, 0.598, 0.353],
+           [0.313, 0.098, 0.853]])
+    >>> Lattice(dimension=2,randomize=False,backend='GAIL').gen_samples(n_min=2,n_max=4)
+    array([[0.25, 0.25],
+           [0.75, 0.75]])
+    >>> Lattice(dimension=2,randomize=False,backend='MPS').gen_samples(n_min=2,n_max=4)
+    array([[0.25, 0.25],
+           [0.75, 0.75]])
+
     References
         Sou-Cheng T. Choi, Yuhan Ding, Fred J. Hickernell, Lan Jiang, 
         Lluis Antoni Jimenez Rugama, Da Li, Jagadeeswaran Rathinavel, 
@@ -32,18 +58,19 @@ class Lattice(DiscreteDistribution):
         R Cools, FY Kuo, D Nuyens -  SIAM J. Sci. Comput., 28(6), 2162-2188.
     """
 
-    parameters = ['dimension','scramble','seed','backend','mimics']
+    parameters = ['dimension','randomize','seed','backend','mimics']
     
-    def __init__(self, dimension=1, scramble=True, seed=None, backend='GAIL'):
+    def __init__(self, dimension=1, randomize=True, seed=None, backend='GAIL'):
         """
         Args:
             dimension (int): dimension of samples
-            scramble (bool): If True, apply unique scramble to each replication     
+            randomize (bool): If True, apply shift to generated samples    
             seed (int): seed the random number generator for reproducibility
-            backend (str): backend generator
+            backend (str): backend generator must be either "GAIL" or "MPS". 
+                "GAIL" provides standard point ordering but is slightly slower than "MPS".
         """
         self.dimension = dimension
-        self.scramble = scramble
+        self.randomize = randomize
         self.seed = seed
         self.backend = backend.lower()            
         if self.backend == 'gail':
@@ -54,7 +81,7 @@ class Lattice(DiscreteDistribution):
             raise ParameterError("Lattice backend must 'GAIL' or 'MPS'")
         self.mimics = 'StdUniform'
         self.set_seed(self.seed)
-        super().__init__()
+        super(Lattice,self).__init__()
 
     def gen_samples(self, n=None, n_min=0, n_max=8):
         """
@@ -74,10 +101,10 @@ class Lattice(DiscreteDistribution):
             n_max = n     
         if log2(n_max) % 1 != 0:
             raise ParameterError("n_max must be a power of 2")
-        if not (n_min == 0 or n_min == n_max/2):
+        if not (n_min == 0 or n_min == float(n_max)/2):
             raise ParameterError("n_min must be 0 or n_max/2")
         x_lat = self.backend_gen(n_min,n_max,self.dimension)
-        if self.scramble: # apply random shift to samples
+        if self.randomize: # apply random shift to samples
             x_lat = (x_lat + self.shift)%1
         return x_lat
     

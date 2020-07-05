@@ -14,11 +14,11 @@ Inverse CDF Sampling
 Exponential
 ~~~~~~~~~~~
 
-:raw-latex:`\begin{equation}
-y \sim exp(\lambda) \qquad \text{pdf y } f(x) = \lambda e^{-\lambda x} \\
-\text{cdf y } F(x) = 1-e^{-\lambda x} \qquad \text{inverse cdf } F^{-1}(x) = \frac{-log(1-x)}{\lambda} \\
-\therefore y \sim \frac{-log(1-u)}{\lambda} \text{ for } u \sim U_d(0,1)
-\end{equation}`
+.. math::
+
+   y \sim exp(\lambda) \qquad \text{pdf y } f(x) = \lambda e^{-\lambda x} \\
+   \text{cdf y } F(x) = 1-e^{-\lambda x} \qquad \text{inverse cdf } F^{-1}(x) = \frac{-log(1-x)}{\lambda} \\
+   \therefore y \sim \frac{-log(1-u)}{\lambda} \text{ for } u \sim U_d(0,1)
 
 .. code:: ipython3
 
@@ -56,11 +56,14 @@ y \sim exp(\lambda) \qquad \text{pdf y } f(x) = \lambda e^{-\lambda x} \\
     exponential_measure = InverseCDFSampling(
         distribution_mimicking_uniform = Sobol(dimension=2,seed=7),
         inverse_cdf_fun = exp_inverse_cdf)
-    exp_samples = exponential_measure.gen_samples(2**8)
+    exp_samples = exponential_measure.gen_samples(2**7)
     pyplot.scatter(exp_samples[:,0],exp_samples[:,1],color='g')
     pyplot.xlabel('$x_0$')
     pyplot.ylabel('$x_1$')
-    pyplot.title('2 Dimensional $exp(\lambda=%.1f)$ samples'%lambda_);
+    pyplot.xlim([0,4])
+    pyplot.ylim([0,4])
+    pyplot.title('Exp(1.5)')
+    pyplot.savefig("../outputs/sample_scatters/exp_sobol.png", dpi=200);
 
 
 
@@ -70,12 +73,12 @@ y \sim exp(\lambda) \qquad \text{pdf y } f(x) = \lambda e^{-\lambda x} \\
 Cauchy
 ------
 
-:raw-latex:`\begin{equation}
-y \sim cauchy(x_0,\gamma) \qquad \text{pdf y } f(x) = [\pi \gamma (1+(\frac{x-x_0}{\gamma})^2)]^{-1} \\
-\text{cdf y } F(x) = \frac{1}{\pi} arctan(\frac{x-x_0}{\gamma}) + 1/2 \qquad \\
-\text{inverse cdf } F^{-1}(x) = tan(\pi(x-\frac{1}{2}))\gamma + x_0 \\
-\therefore y \sim  tan(\pi(u-\frac{1}{2}))\gamma + x_0 \text{ for } u \sim U_d(0,1)
-\end{equation}`
+.. math::
+
+   y \sim cauchy(x_0,\gamma) \qquad \text{pdf y } f(x) = [\pi \gamma (1+(\frac{x-x_0}{\gamma})^2)]^{-1} \\
+   \text{cdf y } F(x) = \frac{1}{\pi} arctan(\frac{x-x_0}{\gamma}) + 1/2 \qquad \\
+   \text{inverse cdf } F^{-1}(x) = tan(\pi(x-\frac{1}{2}))\gamma + x_0 \\
+   \therefore y \sim  tan(\pi(u-\frac{1}{2}))\gamma + x_0 \text{ for } u \sim U_d(0,1)
 
 .. code:: ipython3
 
@@ -112,19 +115,19 @@ y \sim cauchy(x_0,\gamma) \qquad \text{pdf y } f(x) = [\pi \gamma (1+(\frac{x-x_
 Acceptance Rejection Sampling
 -----------------------------
 
-:raw-latex:`\begin{equation}
-\text{objective pdf } f(x) = \begin{cases}
-        16x/3 &, 0 \leq x \leq 1/4,\\
-        4/3 &, 1/4 <x < 3/4,\\
-        16(1-x)/3 &, 3/4 < x < 1
-\end{cases}
-\end{equation}`
+.. math::
+
+   \text{objective pdf } f(x) = \begin{cases}
+           16x/3 &, 0 \leq x \leq 1/4,\\
+           4/3 &, 1/4 <x < 3/4,\\
+           16(1-x)/3 &, 3/4 < x < 1
+   \end{cases}
 
 .. code:: ipython3
 
     def f(x):
         x = x if x<.5 else 1-x # utilize symmetry 
-        density = 16*x/3 if x<1/4 else 4/3
+        density = 16.*x/3. if x<1./4 else 4./3
         return density
 
 .. code:: ipython3
@@ -153,8 +156,8 @@ Acceptance Rejection Sampling
 
 .. parsed-literal::
 
-    Expected (total draws / successful draws) = c = 1.333
-    Successful Draws: 5000  Total Draws: 6699
+    Expected (total draws / successful draws) = c = 1.467
+    Successful Draws: 5000  Total Draws: 7299
 
 
 
@@ -212,12 +215,12 @@ Independent priors :math:`\alpha \sim t_4(0,2^2)` and
 
 .. parsed-literal::
 
-    Successful Draws: 100   Total Draws: 1401
+    Successful Draws: 100   Total Draws: 3602
     Posterior samples mean
-    [ 1.339 -0.335]
+    [ 1.377 -0.371]
     Posterior samples covariance
-    [[ 0.320 -0.355]
-     [-0.355  0.568]]
+    [[ 0.4   -0.421]
+     [-0.421  0.595]]
 
 
 .. code:: ipython3
@@ -233,9 +236,9 @@ Independent priors :math:`\alpha \sim t_4(0,2^2)` and
 
 .. parsed-literal::
 
-    Successful Draws: 1000  Total Draws: 2488
-    95% confidence interval for alpha: (0.526,2.186)
-    95% confidence interval for beta:  (-1.014,0.421)
+    Successful Draws: 1000  Total Draws: 3164
+    95% confidence interval for alpha: (0.483,2.125)
+    95% confidence interval for beta:  (-0.989,0.327)
 
 
 Importance Sampling
@@ -245,17 +248,17 @@ Let :math:`\mathcal{X}` be the domain. We are interested in integrand
 :math:`g(\mathbf{x})` defined with respect to measure
 :math:`\rho(\mathbf{x})` for :math:`\mathbf{x} \in \mathcal{X}`.
 
-.. math:: \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})d\mathbf{x}
+.. math:: \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})d\mathbf{x}.
 
- For importance sampling, we can capture this domain,
+For importance sampling, we can capture this domain,
 :math:`\mathcal{X}`, in a unit box, :math:`\beta=[a,b]^d`, such that
 
-:raw-latex:`\begin{equation}
-\forall \mathbf{x} \in \mathcal{X}: \mathbf{x} \in \beta \\
-\tilde{g}(\mathbf{x}) = \begin{cases} g(\mathbf{x}), & \mathbf{x} \in \mathcal{X} \\ 0, & \text{otherwise} \end{cases} \qquad \text{for } \mathbf{x} \in \beta \\
-\tilde{\rho}(\mathbf{x}) = \begin{cases} \rho(\mathbf{x}), & \mathbf{x} \in \mathcal{X} \\ 0, & \text{otherwise} \end{cases} \qquad \text{for } \mathbf{x} \in \beta \\
-\therefore \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})dx = \int_{\beta} \tilde{g}(\mathbf{x}) \tilde{\rho}(\mathbf{x}) d\mathbf{x}
-\end{equation}`
+.. math::
+
+   \forall \mathbf{x} \in \mathcal{X}: \mathbf{x} \in \beta \\
+   \tilde{g}(\mathbf{x}) = \begin{cases} g(\mathbf{x}), & \mathbf{x} \in \mathcal{X} \\ 0, & \text{otherwise} \end{cases} \qquad \text{for } \mathbf{x} \in \beta \\
+   \tilde{\rho}(\mathbf{x}) = \begin{cases} \rho(\mathbf{x}), & \mathbf{x} \in \mathcal{X} \\ 0, & \text{otherwise} \end{cases} \qquad \text{for } \mathbf{x} \in \beta \\
+   \therefore \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})dx = \int_{\beta} \tilde{g}(\mathbf{x}) \tilde{\rho}(\mathbf{x}) d\mathbf{x}
 
 Quarter Circle Example
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -266,9 +269,7 @@ the integrand :math:`g(\mathbf{x}) = \mathbf{x}_1+\mathbf{x}_2`, and our
 measure :math:`\rho(x) = 4/\pi`. Therefore we choose
 :math:`\beta = [0,1]^2` and solve
 
-:raw-latex:`\begin{equation}
-    \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})dx = \int_0^1 \int_0^1 \tilde{g}(\mathbf{x}) \tilde{\rho}(\mathbf{x}) d\mathbf{x}_1d\mathbf{x}_2 = \frac{8}{3\pi}
-\end{equation}`
+.. math:: \int_{\mathcal{X}} g(\mathbf{x}) \rho(\mathbf{x})dx = \int_0^1 \int_0^1 \tilde{g}(\mathbf{x}) \tilde{\rho}(\mathbf{x}) d\mathbf{x}_1d\mathbf{x}_2 = \frac{8}{3\pi}
 
 .. code:: ipython3
 
@@ -277,7 +278,7 @@ measure :math:`\rho(x) = 4/\pi`. Therefore we choose
     def quarter_circle_uniform_pdf(x):
         x1,x2 = x
         if sqrt(x1**2+x2**2)<1 and x1>=0 and x2>=0:
-            return 4/pi # 1/(pi*(1**2)/4)
+            return 4./pi # 1/(pi*(1**2)/4)
         else:
             return 0. # outside of quarter circle
 
@@ -286,8 +287,8 @@ measure :math:`\rho(x) = 4/\pi`. Therefore we choose
     measure = ImportanceSampling(
         objective_pdf = quarter_circle_uniform_pdf,
         measure_to_sample_from = Uniform(Lattice(dimension=2,seed=9)))
-    integrand = QuickConstruct(measure, lambda x: x.sum(1))
-    solution,data = CubLattice_g(integrand,abs_tol=abs_tol).integrate()
+    integrand = CustomFun(measure, lambda x: x.sum(1))
+    solution,data = CubQMCLatticeG(integrand,abs_tol=abs_tol).integrate()
     print(data)
     within_tol = abs(solution-true_value)<abs_tol
     print('Within tolerance of true value %.3f: %s'%(true_value,within_tol))
@@ -296,26 +297,23 @@ measure :math:`\rho(x) = 4/\pi`. Therefore we choose
 .. parsed-literal::
 
     Solution: 0.8479         
-    QuickConstruct (Integrand Object)
+    CustomFun (Integrand Object)
     Lattice (DiscreteDistribution Object)
-    	dimension       2
-    	scramble        1
-    	seed            9
-    	backend         gail
-    	mimics          StdUniform
+        dimension       2^(1)
+        randomize       1
+        seed            9
+        backend         gail
+        mimics          StdUniform
     ImportanceSampling (TrueMeasure Object)
-    	distrib_name    Lattice
-    CubLattice_g (StoppingCriterion Object)
-    	abs_tol         0.0010
-    	rel_tol         0
-    	n_init          1024
-    	n_max           34359738368
-    CubatureData (AccumulateData Object)
-    	n_total         8192
-    	solution        0.8479
-    	r_lag           4
-    	time_integrate  0.1548
-    
+    CubQMCLatticeG (StoppingCriterion Object)
+        abs_tol         0.001
+        rel_tol         0
+        n_init          2^(10)
+        n_max           2^(35)
+    LDTransformData (AccumulateData Object)
+        n_total         2^(13)
+        solution        0.848
+        r_lag           2^(2)
+        time_integrate  0.111
     Within tolerance of true value 0.849: True
-
 

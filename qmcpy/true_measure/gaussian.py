@@ -1,16 +1,43 @@
 from ._true_measure import TrueMeasure
 from ..util import TransformError,DimensionError
+from ..discrete_distribution import Sobol
 from numpy import array, sqrt, eye, dot, pi, exp,dot, tile, isscalar, diag
 from numpy.linalg import cholesky, det, inv
 from scipy.stats import norm
 
 
 class Gaussian(TrueMeasure):
-    """ Normal Measure """
+    """
+    Normal Measure.
+    
+    >>> dd = Sobol(2,seed=7)
+    >>> g = Gaussian(dd,mean=1,covariance=1./4)
+    >>> g
+    Gaussian (TrueMeasure Object)
+        mean            1
+        covariance      2^(-2)
+    >>> g.gen_mimic_samples(n_min=4,n_max=8)
+    array([[ 1.533,  0.676],
+           [ 0.817,  1.351],
+           [ 1.136,  1.011],
+           [ 0.379, -0.194]])
+    >>> g.set_dimension(4)
+    >>> g.gen_mimic_samples(n_min=2,n_max=4)
+    array([[1.309, 0.445, 1.128, 0.813],
+           [0.634, 1.171, 0.362, 1.528]])
+    >>> g2 = Gaussian(Sobol(2),mean=[1,2],covariance=[[1,.5],[.5,2]])
+    >>> g2
+    Gaussian (TrueMeasure Object)
+        mean            [1 2]
+        covariance      [[1.  0.5]
+                        [0.5 2. ]]
+    >>> g2.pdf(array([0,0]))
+    array([[0.027]])
+    """
 
     parameters = ['mean', 'covariance']
 
-    def __init__(self, distribution, mean=0, covariance=1):
+    def __init__(self, distribution, mean=0., covariance=1.):
         """
         Args:
             distribution (DiscreteDistribution): DiscreteDistribution instance
@@ -34,14 +61,14 @@ class Gaussian(TrueMeasure):
             raise DimensionError("mean must have length dimension and "+\
                 "covariance must be of shapre dimension x dimension")
         self.sigma = cholesky(self.sigma2)
-        super().__init__()
+        super(Gaussian,self).__init__()
     
     def pdf(self, x):
         """ See abstract method. """
         x = x.reshape(self.d,1)
         mu = self.mu.reshape(self.d,1)
-        density = (2*pi)**(-self.d/2) * det(self.sigma)**(-1/2) * \
-            exp(-1/2 *  dot( dot((x-mu).T,inv(self.sigma)), x-mu) )
+        density = (2*pi)**(-self.d/2.) * det(self.sigma)**(-1./2) * \
+            exp(-1./2 *  dot( dot((x-mu).T,inv(self.sigma)), x-mu) )
         return density
 
     def _tf_to_mimic_samples(self, samples):

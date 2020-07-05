@@ -4,7 +4,7 @@ Scatter Plots of Samples
 .. code:: ipython3
 
     from copy import deepcopy
-    from numpy import ceil, linspace, meshgrid, zeros, array, arange
+    from numpy import ceil, linspace, meshgrid, zeros, array, arange, random
     from mpl_toolkits.mplot3d.axes3d import Axes3D
     
     import matplotlib
@@ -33,13 +33,15 @@ Visualize IID standard uniform and standard normal sampling points
 
 .. code:: ipython3
 
+    random.seed(7)
     discrete_distribs = [
         IIDStdUniform(dimension=2, seed=7),
-        IIDStdGaussian(dimension=2, seed=7)]
-    dd_names = ["$\\mathcal{U}_2\\,(0,1)$", "$\\mathcal{N}_2\\,(0,1)$"]
-    colors = ["b", "r"]
-    lims = [[0, 1], [-2.5, 2.5]]
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(11, 6))
+        IIDStdGaussian(dimension=2, seed=7),
+        CustomIIDDistribution(lambda n: random.exponential(scale=2./3,size=(n,2)))]
+    dd_names = ["$\\mathcal{U}_2\\,(0,1)$", "$\\mathcal{N}_2\\,(0,1)$", "Exp(1.5)"]
+    colors = ["b", "r", "g"]
+    lims = [[0, 1], [-2.5, 2.5],[0,4]]
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(16, 6))
     for i, (dd_obj, color, lim, dd_name) in enumerate(zip(discrete_distribs, colors, lims, dd_names)):
         samples = dd_obj.gen_samples(n)
         ax[i].scatter(samples[:, 0], samples[:, 1], color=color)
@@ -66,14 +68,16 @@ Visualize shifted lattice and scrambled Sobol sampling points
 .. code:: ipython3
 
     discrete_distribs = [
-        Lattice(dimension=2, scramble=True, seed=7, backend='GAIL'),
-        Sobol(dimension=2, scramble=True, seed=7, backend='QRNG')]
-    dd_names = ["Shifted Lattice", "Scrambled Sobol"]
-    colors = ["g", "c"]
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(11, 6))
+        Lattice(dimension=2, randomize=True, seed=7, backend='GAIL'),
+        Sobol(dimension=2, randomize=True, seed=7, backend='QRNG'),
+        Halton(dimension=2,generalize=True,seed=7),
+        Korobov(dimension=2,randomize=True,seed=7)]
+    dd_names = ["Shifted Lattice", "Shifted Sobol", "Generalized Halgon", "Randomized Korobov"]
+    colors = ["g", "c", "m", "r"]
+    fig, ax = plt.subplots(nrows=1, ncols=4, figsize=(22, 6))
     for i, (dd_obj, color, dd_name) in \
             enumerate(zip(discrete_distribs, colors, dd_names)):
-        samples = dd_obj.gen_samples(n_min=0, n_max=n)
+        samples = dd_obj.gen_samples(n)
         ax[i].scatter(samples[:, 0], samples[:, 1], color=color)
         ax[i].set_xlabel("$x_1$")
         ax[i].set_ylabel("$x_2$")
@@ -106,8 +110,8 @@ Distributions
             IIDStdUniform(dimension=2, seed=7),
             IIDStdGaussian(dimension=2, seed=7)]
         iid_names = [
-            "IID $\\mathcal{U}_2\\,(0,1)$",
-            "IID $\\mathcal{N}_2\\,(0,1)$"]
+            "IID $\\mathcal{U}\\,(0,1)^2$",
+            "IID $\\mathcal{N}\\,(0,1)^2$"]
         for distrib, distrib_name in zip(iid_distribs, iid_names):
             measure_obj = measure(distrib, **kwargs)
             samples = measure_obj.gen_mimic_samples(n)
@@ -115,8 +119,8 @@ Distributions
             i += 1
         # Quasi Random Distributions
         qrng_distribs = [
-            Lattice(dimension=2, scramble=True, seed=7, backend='GAIL'),
-            Sobol(dimension=2, scramble=True, seed=7, backend='QRNG')]
+            Lattice(dimension=2, randomize=True, seed=7, backend='GAIL'),
+            Sobol(dimension=2, randomize=True, seed=7, backend='QRNG')]
         qrng_names = ["Shifted Lattice",
                       "Scrambled Sobol"]
         for distrib, distrib_name in zip(qrng_distribs, qrng_names):
@@ -142,7 +146,7 @@ Distributions
 
 .. code:: ipython3
 
-    plot_tm_tranformed("$\\mathcal{U}_2\\,(0,1)$","b",[0, 1],Uniform)
+    plot_tm_tranformed("$\\mathcal{U}\\,(0,1)^2$","b",[0, 1],Uniform)
 
 
 
@@ -151,7 +155,7 @@ Distributions
 
 .. code:: ipython3
 
-    plot_tm_tranformed("$\\mathcal{N}_2\\,(0,1)$","r",[-2.5, 2.5],Gaussian)
+    plot_tm_tranformed("$\\mathcal{N}\\,(0,1)^2$","r",[-2.5, 2.5],Gaussian)
 
 
 
@@ -181,9 +185,10 @@ measures
     u2_a, u2_b = 6, 8
     g1_mu, g1_var = 3, 9
     g2_mu, g2_var = 7, 9
-    distribution = Sobol(dimension=2, scramble=True, seed=7, backend='QRNG')
+    g_cov = 5
+    distribution = Sobol(dimension=2, randomize=True, seed=7, backend='QRNG')
     uniform_measure = Uniform(distribution,lower_bound=[u1_a, u2_a],upper_bound=[u1_b, u2_b])
-    gaussian_measure = Gaussian(distribution,mean=[g1_mu, g2_mu],covariance=[g1_var, g2_var])
+    gaussian_measure = Gaussian(distribution,mean=[g1_mu, g2_mu],covariance=[[g1_var, g_cov],[g_cov,g2_var]])
     # Generate Samples and Create Scatter Plots
     for i, (measure, color) in enumerate(zip([uniform_measure, gaussian_measure], ["m", "y"])):
         samples = measure.gen_mimic_samples(n_min=0, n_max=n)
@@ -193,8 +198,6 @@ measures
         ax[i].set_xlabel("$x_1$")
         ax[i].set_ylabel("$x_2$")
         ax[i].set_aspect("equal")
-    ax[0].set_title("$X$ ~ $\\mathcal{U}\\,([%d,%d] \:,\: [%d,%d])$\t,\t" % (u1_a, u1_b,u2_a, u2_b))
-    ax[1].set_title("$X_1$ ~ $\\mathcal{N}\\,([%d,%d] \:,\: [%d,%d]*I)$\t,\t" % (g1_mu, g1_var,g2_mu, g2_var))
     ax[0].set_xlim([u1_a, u1_b])
     ax[0].set_ylim([u2_a, u2_b])
     spread_g1 = ceil(3 * g1_var**.5)
@@ -218,39 +221,38 @@ Plots samples on a 2D Keister function
     # Generate constants for 3d plot in following cell
     abs_tol = .5
     distribution = IIDStdGaussian(dimension=2, seed=7)
-    measure = Gaussian(distribution, covariance=1/2)
+    measure = Gaussian(distribution, covariance=1./2)
     integrand = Keister(measure)
-    solution,data = CLT(integrand,abs_tol=abs_tol,rel_tol=0,n_init=16, n_max=1e10).integrate()
+    solution,data = CubMCCLT(integrand,abs_tol=abs_tol,rel_tol=0,n_init=16, n_max=1e10).integrate()
     print(data)
 
 
 .. parsed-literal::
 
-    Solution: 2.0554         
+    Solution: 1.8757         
     Keister (Integrand Object)
     IIDStdGaussian (DiscreteDistribution Object)
-    	dimension       2
-    	seed            7
-    	mimics          StdGaussian
+        dimension       2
+        seed            7
+        mimics          StdGaussian
     Gaussian (TrueMeasure Object)
-    	distrib_name    IIDStdGaussian
-    	mean            0
-    	covariance      0.5000
-    CLT (StoppingCriterion Object)
-    	inflate         1.2000
-    	alpha           0.0100
-    	abs_tol         0.5000
-    	rel_tol         0
-    	n_init          16
-    	n_max           10000000000
+        distrib_name    IIDStdGaussian
+        mean            0
+        covariance      0.5000
+    CubMCCLT (StoppingCriterion Object)
+        inflate         1.2000
+        alpha           0.0100
+        abs_tol         0.5000
+        rel_tol         0
+        n_init          16
+        n_max           10000000000
     MeanVarData (AccumulateData Object)
-    	levels          1
-    	solution        2.0554
-    	n               65
-    	n_total         81
-    	confid_int      [ 1.646  2.464]
-    	time_integrate  0.0025
-    
+        levels          1
+        solution        1.8757
+        n               50
+        n_total         66
+        confid_int      [ 1.358  2.393]
+        time_integrate  0.0013
 
 
 .. code:: ipython3

@@ -1,13 +1,25 @@
 from ._true_measure import TrueMeasure
 from ..util import TransformError
-from numpy import apply_along_axis
+from . import Uniform
+from ..discrete_distribution import Lattice
+from numpy import apply_along_axis, sqrt, pi
 
 
 class ImportanceSampling(TrueMeasure):
     """
     Define
         - m(x) is pdf of measure we do not know how to generate from (mystery) 
-        - k(x) is pdf of measure we can generate discrete distribution samples from (known)
+        - k(x) is the pdf of the continuous distribution which the discrete distribution mimics (known)
+    
+    >>> def quarter_circle_uniform_pdf(x):
+    ...     x1,x2 = x
+    ...     if sqrt(x1**2+x2**2)<1 and x1>=0 and x2>=0:
+    ...         return 4./pi # 1./(pi*(1**2)/4)
+    ...     else:
+    ...         return 0. # outside of quarter circle
+    >>> tm = ImportanceSampling(
+    ...     objective_pdf = quarter_circle_uniform_pdf,
+    ...     measure_to_sample_from = Uniform(Lattice(2,seed=7)))
     """
 
     parameters = []
@@ -29,7 +41,7 @@ class ImportanceSampling(TrueMeasure):
         if not hasattr(self.measure,'_tf_to_mimic_samples'):
             raise TransformError('measure_to_sample_from must have _tf_to_mimic_samples method')
         self.k_sample_tf = self.measure._tf_to_mimic_samples
-        super().__init__()
+        super(ImportanceSampling,self).__init__()
 
     def transform_g_to_f(self, g):
         """ See abstract method. """

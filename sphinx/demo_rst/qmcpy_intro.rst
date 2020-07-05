@@ -16,10 +16,10 @@ environment. First, we can import the package ``qmcpy`` under the alias
 
 .. parsed-literal::
 
-    qmcpy 0.1
+    qmcpy 0.2
 
 
-Alternatively, we can import individual objects from ‘qmcpy’ as shown
+Alternatively, we can import individual objects from 'qmcpy' as shown
 below.
 
 .. code:: ipython3
@@ -48,7 +48,7 @@ The code below generates 4 Sobol samples of 2 dimensions.
 
 .. code:: ipython3
 
-    distribution = Lattice(dimension=2, scramble=True, seed=7, backend='MPS')
+    distribution = Lattice(dimension=2, randomize=True, seed=7, backend='MPS')
     distribution.gen_samples(n_min=0,n_max=4)
 
 
@@ -58,8 +58,8 @@ The code below generates 4 Sobol samples of 2 dimensions.
 
     array([[ 0.076,  0.780],
            [ 0.576,  0.280],
-           [ 0.326,  0.530],
-           [ 0.826,  0.030]])
+           [ 0.326,  0.030],
+           [ 0.826,  0.530]])
 
 
 
@@ -71,8 +71,8 @@ following integral:
 
 .. math:: \int_{[0,1]^d} \|x\|_2^{\|x\|_2^{1/2}} dx,
 
-\ where :math:`[0,1]^d` is the unit hypercube in :math:`\mathbb{R}^d`.
-The integrand is defined everywhere except at :math:`x=0` and hence the
+where :math:`[0,1]^d` is the unit hypercube in :math:`\mathbb{R}^d`. The
+integrand is defined everywhere except at :math:`x=0` and hence the
 definite integral is also defined.
 
 The key in defining a Python function of an integrand in the QMCPy
@@ -96,7 +96,7 @@ follows:
     def f(x): return norm(x) ** sqrt(norm(x))
 
 It looks reasonable except that maybe the Numpy function norm is
-executed twice. It’s okay for now. Let us quickly test if the function
+executed twice. It's okay for now. Let us quickly test if the function
 behaves as expected at a point value:
 
 .. code:: ipython3
@@ -118,8 +118,8 @@ two-dimensional domain, i.e., :math:`d=2`?
 
 .. code:: ipython3
 
-    x = array([[1, 0], 
-               [0, 0.01],
+    x = array([[1., 0.], 
+               [0., 0.01],
                [0.04, 0.04]])
     f(x)
 
@@ -133,7 +133,7 @@ two-dimensional domain, i.e., :math:`d=2`?
 
 
 Now, the function should have returned :math:`n=3` real values that
-corresponding to each of the sampling points. Let’s debug our Python
+corresponding to each of the sampling points. Let's debug our Python
 function.
 
 .. code:: ipython3
@@ -149,8 +149,8 @@ function.
 
 
 
-Numpy’s ``norm(x)`` is obviously a matrix norm, but we want it to be
-vector 2-norm that acts on each row of ``x``. To that end, let’s add an
+Numpy's ``norm(x)`` is obviously a matrix norm, but we want it to be
+vector 2-norm that acts on each row of ``x``. To that end, let's add an
 axis argument to the function:
 
 .. code:: ipython3
@@ -166,7 +166,7 @@ axis argument to the function:
 
 
 
-Now it’s working! Let’s make sure that the ``sqrt`` function is acting
+Now it's working! Let's make sure that the ``sqrt`` function is acting
 on each element of the vector norm results:
 
 .. code:: ipython3
@@ -206,7 +206,7 @@ We have got our proper function definition now.
         return x_norms ** sqrt(x_norms)
 
 We can now create an ``integrand`` instance with our ``QuickConstruct``
-class in QMCPy and then invoke QMCPy’s ``integrate`` function:
+class in QMCPy and then invoke QMCPy's ``integrate`` function:
 
 .. code:: ipython3
 
@@ -214,41 +214,40 @@ class in QMCPy and then invoke QMCPy’s ``integrate`` function:
     abs_tol = .01
     distribution = IIDStdUniform(dimension=dim, seed=7)
     measure = Uniform(distribution)
-    integrand = QuickConstruct(measure, custom_fun=f)
-    solution,data = CLT(integrand,abs_tol=abs_tol,rel_tol=0).integrate()
+    integrand = CustomFun(measure, custom_fun=f)
+    solution,data = CubMCCLT(integrand,abs_tol=abs_tol,rel_tol=0).integrate()
     print(data)
 
 
 .. parsed-literal::
 
-    Solution: 0.6575         
-    QuickConstruct (Integrand Object)
+    Solution: 0.6571         
+    CustomFun (Integrand Object)
     IIDStdUniform (DiscreteDistribution Object)
-    	dimension       1
-    	seed            7
-    	mimics          StdUniform
+        dimension       1
+        seed            7
+        mimics          StdUniform
     Uniform (TrueMeasure Object)
-    	distrib_name    IIDStdUniform
-    	lower_bound     0
-    	upper_bound     1
-    CLT (StoppingCriterion Object)
-    	inflate         1.2000
-    	alpha           0.0100
-    	abs_tol         0.0100
-    	rel_tol         0
-    	n_init          1024
-    	n_max           10000000000
+        distrib_name    IIDStdUniform
+        lower_bound     0
+        upper_bound     1
+    CubMCCLT (StoppingCriterion Object)
+        inflate         1.2000
+        alpha           0.0100
+        abs_tol         0.0100
+        rel_tol         0
+        n_init          1024
+        n_max           10000000000
     MeanVarData (AccumulateData Object)
-    	levels          1
-    	solution        0.6575
-    	n               3305
-    	n_total         4329
-    	confid_int      [ 0.647  0.668]
-    	time_integrate  0.0015
-    
+        levels          1
+        solution        0.6571
+        n               3359
+        n_total         4383
+        confid_int      [ 0.647  0.667]
+        time_integrate  0.0016
 
 
-For our integral, we know the true value. Let’s check if QMCPy’s
+For our integral, we know the true value. Let's check if QMCPy's
 solution is accurate enough:
 
 .. code:: ipython3
@@ -264,7 +263,7 @@ solution is accurate enough:
     True
 
 
-It’s good. Shall we test the function with :math:`d=2` by simply
+It's good. Shall we test the function with :math:`d=2` by simply
 changing the input parameter value of dimension for QuickConstruct?
 
 .. code:: ipython3
@@ -272,38 +271,37 @@ changing the input parameter value of dimension for QuickConstruct?
     dim = 2
     distribution = IIDStdUniform(dimension=dim, seed=7)
     measure = Uniform(distribution)
-    integrand = QuickConstruct(measure, custom_fun=f)
-    solution2,data2 = CLT(integrand,abs_tol=abs_tol,rel_tol=0).integrate()
+    integrand = CustomFun(measure, custom_fun=f)
+    solution2,data2 = CubMCCLT(integrand,abs_tol=abs_tol,rel_tol=0).integrate()
     print(data2)
 
 
 .. parsed-literal::
 
-    Solution: 0.8309         
-    QuickConstruct (Integrand Object)
+    Solution: 0.8264         
+    CustomFun (Integrand Object)
     IIDStdUniform (DiscreteDistribution Object)
-    	dimension       2
-    	seed            7
-    	mimics          StdUniform
+        dimension       2
+        seed            7
+        mimics          StdUniform
     Uniform (TrueMeasure Object)
-    	distrib_name    IIDStdUniform
-    	lower_bound     [ 0.000  0.000]
-    	upper_bound     [ 1.000  1.000]
-    CLT (StoppingCriterion Object)
-    	inflate         1.2000
-    	alpha           0.0100
-    	abs_tol         0.0100
-    	rel_tol         0
-    	n_init          1024
-    	n_max           10000000000
+        distrib_name    IIDStdUniform
+        lower_bound     [ 0.000  0.000]
+        upper_bound     [ 1.000  1.000]
+    CubMCCLT (StoppingCriterion Object)
+        inflate         1.2000
+        alpha           0.0100
+        abs_tol         0.0100
+        rel_tol         0
+        n_init          1024
+        n_max           10000000000
     MeanVarData (AccumulateData Object)
-    	levels          1
-    	solution        0.8309
-    	n               5452
-    	n_total         6476
-    	confid_int      [ 0.821  0.841]
-    	time_integrate  0.0019
-    
+        levels          1
+        solution        0.8264
+        n               5455
+        n_total         6479
+        confid_int      [ 0.816  0.836]
+        time_integrate  0.0017
 
 
 Once again, we could test for accuracy of QMCPy with respect to the true

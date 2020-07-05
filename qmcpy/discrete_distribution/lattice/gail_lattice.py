@@ -13,9 +13,9 @@ Reference:
     Available from http://gailgithub.github.io/GAIL_Dev/
 """
 
-from numpy import log2, zeros, hstack, tile, outer, array
+from numpy import log2, zeros, hstack, tile, outer, array, double
 
-gen_vec = array([ # copied from 
+gen_vec = array([
     1, 433461, 315689, 441789, 501101, 146355, 88411, 215837, 273599, 151719, 258185, 357967, 96407, 
     203741, 211709, 135719, 100779, 85729, 14597, 94813, 422013, 484367, 355029, 123065, 467905, 41129, 
     298607, 375981, 256421, 279695, 164795, 256413, 267543, 505211, 225547, 50293, 97031, 86633, 203383, 
@@ -60,7 +60,7 @@ gen_vec = array([ # copied from
     394407, 372929, 139823, 114515, 416815, 260309, 489593, 156763, 21523, 189285, 308129, 155369, 213557, 298023, 
     391439, 379245, 409109, 229765, 28521, 464087, 470911, 435965, 201451, 64371, 370499, 276377, 331635, 196813, 
     379415, 229547, 430067, 137053, 312839, 390385, 77155, 163911, 514381, 487453],
-    dtype=float)
+    dtype=double)
 
 
 def vdc(n):
@@ -76,7 +76,7 @@ def vdc(n):
         kk = 2**(k-l-1)
         ptind_nl = hstack((tile(False,nl),tile(True,nl)))
         ptind = tile(ptind_nl,int(kk))
-        q[ptind] += 1/2**(l+1)
+        q[ptind] += 1./2**(l+1)
     return q
 
 
@@ -97,6 +97,6 @@ def gail_lattice_gen(n_min, n_max, d):
     if n_min == 0:
         y = vdc(nelem)
     else:
-        y = vdc(nelem)+1/(2*n_min)
+        y = vdc(nelem)+1./(2*n_min)
     xlat = outer(y,gen_vec[0:d])%1
     return xlat

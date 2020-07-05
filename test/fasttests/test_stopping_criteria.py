@@ -2,169 +2,169 @@
 
 from qmcpy import *
 from qmcpy.util import *
-from numpy import arange
-import unittest
-
+import sys
+vinvo = sys.version_info
+if vinvo[0]==3: import unittest
+else: import unittest2 as unittest
 keister_2d_exact = 1.808186429263620
 tol = .05
 rel_tol = 0
 
 
-class TestClt(unittest.TestCase):
-    """ Unit tests for Clt StoppingCriterion. """
+class TestCubMcClt(unittest.TestCase):
+    """ Unit tests for CubMCCLT StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
         distribution = Lattice(dimension=2)
         measure = Gaussian(distribution)
         integrand = Keister(measure)
-        self.assertRaises(DistributionCompatibilityError, CLT, integrand)
+        self.assertRaises(DistributionCompatibilityError, CubMCCLT, integrand)
 
     def test_n_max_single_level(self):
         distribution = IIDStdUniform(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        algorithm = CLT(integrand, abs_tol=.001, n_init=64, n_max=1000)
+        algorithm = CubMCCLT(integrand, abs_tol=.001, n_init=64, n_max=1000)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
         
     def test_keister_2d(self):
         distribution = IIDStdUniform(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        solution,data = CLT(integrand, abs_tol=tol).integrate()
+        solution,data = CubMCCLT(integrand, abs_tol=tol).integrate()
         self.assertTrue(abs(solution-keister_2d_exact) < tol)
 
 
-class TestCltRep(unittest.TestCase):
-    """ Unit tests for CltRep StoppingCriterion. """
+class TestCubQmcClt(unittest.TestCase):
+    """ Unit tests for CubQMCCLT StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
         distribution = IIDStdGaussian(dimension=2)
         measure = Gaussian(distribution)
         integrand = Keister(measure)
-        self.assertRaises(DistributionCompatibilityError, CLTRep, integrand)
+        self.assertRaises(DistributionCompatibilityError, CubQMCCLT, integrand)
 
     def test_n_max_single_level(self):
         distribution = Lattice(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        algorithm = CLTRep(integrand, abs_tol=.001, n_init=16, n_max=32)
+        algorithm = CubQMCCLT(integrand, abs_tol=.001, n_init=16, n_max=32)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
     
     def test_keister_2d(self):
         distribution = Sobol(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        solution,data = CLTRep(integrand, abs_tol=tol).integrate()
+        solution,data = CubQMCCLT(integrand, abs_tol=tol).integrate()
         self.assertTrue(abs(solution-keister_2d_exact) < tol)
 
 
-class TestMeanMC_g(unittest.TestCase):
-    """ Unit tests for MeanMC_g StoppingCriterion. """
+class TestCubMcG(unittest.TestCase):
+    """ Unit tests for CubMCG StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
         distribution = Lattice(dimension=2)
         measure = Gaussian(distribution)
         integrand = Keister(measure)
-        self.assertRaises(DistributionCompatibilityError, MeanMC_g, integrand)
+        self.assertRaises(DistributionCompatibilityError, CubMCG, integrand)
 
     def test_n_max_single_level(self):
         distribution = IIDStdUniform(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        algorithm = MeanMC_g(integrand, abs_tol=.001, n_init=64, n_max=500)
+        algorithm = CubMCG(integrand, abs_tol=.001, n_init=64, n_max=500)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
 
     
     def test_keister_2d(self):
         distribution = IIDStdGaussian(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        solution,data = MeanMC_g(integrand, abs_tol=tol).integrate()
+        solution,data = CubMCG(integrand, abs_tol=tol).integrate()
         self.assertTrue(abs(solution-keister_2d_exact) < tol)
 
 
-class TestCubLattice_g(unittest.TestCase):
-    """ Unit tests for CubLattice_g StoppingCriterion. """
+class TestCubQmcLatticeG(unittest.TestCase):
+    """ Unit tests for CubQMCLatticeG StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
         distribution = IIDStdGaussian(dimension=2)
         measure = Gaussian(distribution)
         integrand = Keister(measure)
-        self.assertRaises(DistributionCompatibilityError, CubLattice_g, integrand)
+        self.assertRaises(DistributionCompatibilityError, CubQMCLatticeG, integrand)
 
     def test_n_max_single_level(self):
         distribution = Lattice(dimension=2, backend="GAIL")
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        algorithm = CubLattice_g(integrand, abs_tol=.001, n_init=2**8, n_max=2**9)
+        algorithm = CubQMCLatticeG(integrand, abs_tol=.001, n_init=2**8, n_max=2**9)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
     
     def test_keister_2d(self):
         distribution = Lattice(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        solution,data = CubLattice_g(integrand, abs_tol=tol).integrate()
+        solution,data = CubQMCLatticeG(integrand, abs_tol=tol).integrate()
         self.assertTrue(abs(solution-keister_2d_exact) < tol)
 
 
-'''
-class TestCubSobol_g(unittest.TestCase):
-    """ Unit tests for CubSobol_g StoppingCriterion. """
+class TestCubQmcSobolG(unittest.TestCase):
+    """ Unit tests for CubQMCSobolG StoppingCriterion. """
     def test_raise_distribution_compatibility_error(self):
         distribution = IIDStdGaussian(dimension=2)
         measure = Gaussian(distribution)
         integrand = Keister(measure)
-        self.assertRaises(DistributionCompatibilityError, CubSobol_g, integrand)
+        self.assertRaises(DistributionCompatibilityError, CubQMCSobolG, integrand)
 
     def test_n_max_single_level(self):
         distribution = Sobol(dimension=2, backend="QRNG")
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        algorithm = CubSobol_g(integrand, abs_tol=.001, n_init=2**8, n_max=2**9)
+        algorithm = CubQMCSobolG(integrand, abs_tol=.001, n_init=2**8, n_max=2**9)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
     
     def test_keister_2d(self):
         distribution = Sobol(dimension=2)
-        measure = Gaussian(distribution, covariance=1/2)
+        measure = Gaussian(distribution, covariance=1./2)
         integrand = Keister(measure)
-        solution,data = CubSobol_g(integrand, abs_tol=tol).integrate()
+        solution,data = CubQMCSobolG(integrand, abs_tol=tol).integrate()
         self.assertTrue(abs(solution-keister_2d_exact) < tol)
-'''
 
-class TestMLMC(unittest.TestCase):
-    """ Unit tests for MLMC StoppingCriterion. """
+
+class TestCubMcMl(unittest.TestCase):
+    """ Unit tests for CubMCML StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
-        integrand = MLMCCallOptions(Gaussian(Lattice()))
-        self.assertRaises(DistributionCompatibilityError, MLMC, integrand)
+        integrand = MLCallOptions(Gaussian(Lattice()))
+        self.assertRaises(DistributionCompatibilityError, CubMCML, integrand)
 
     def test_n_max(self):
-        integrand = MLMCCallOptions(Gaussian(IIDStdUniform()),start_strike_price=30)
-        algorithm = MLMC(integrand,rmse_tol=.001,n_max=2**10)
+        integrand = MLCallOptions(Gaussian(IIDStdUniform()),start_strike_price=30)
+        algorithm = CubMCML(integrand,rmse_tol=.001,n_max=2**10)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
     
     def test_european_option(self):
-        integrand = MLMCCallOptions(Gaussian(IIDStdUniform()),start_strike_price=30)
-        solution,data = MLMC(integrand,rmse_tol=tol/2.58).integrate()
+        integrand = MLCallOptions(Gaussian(IIDStdUniform()),start_strike_price=30)
+        solution,data = CubMCML(integrand,rmse_tol=tol/2.58).integrate()
         exact_value = integrand.get_exact_value()
         self.assertTrue(abs(solution-exact_value) < tol)
 
 
-class TestMLQMC(unittest.TestCase):
-    """ Unit tests for MLQMC StoppingCriterion. """
+class TestCubQmcMl(unittest.TestCase):
+    """ Unit tests for CubQMCML StoppingCriterion. """
 
     def test_raise_distribution_compatibility_error(self):
-        integrand = MLMCCallOptions(Gaussian(IIDStdGaussian()))
-        self.assertRaises(DistributionCompatibilityError, MLQMC, integrand)
+        integrand = MLCallOptions(Gaussian(IIDStdGaussian()))
+        self.assertRaises(DistributionCompatibilityError, CubQMCML, integrand)
 
     def test_n_max(self):
-        integrand = MLMCCallOptions(Gaussian(Lattice()),start_strike_price=30)
-        algorithm = MLQMC(integrand,rmse_tol=tol/2.58,n_max=2**10)
+        integrand = MLCallOptions(Gaussian(Lattice()),start_strike_price=30)
+        algorithm = CubQMCML(integrand,rmse_tol=tol/2.58,n_max=2**10)
         self.assertWarns(MaxSamplesWarning, algorithm.integrate)
     
     def test_european_option(self):
-        integrand = MLMCCallOptions(Gaussian(Sobol()),start_strike_price=30)
-        solution,data = MLQMC(integrand,rmse_tol=tol/2.58).integrate()
+        integrand = MLCallOptions(Gaussian(Sobol()),start_strike_price=30)
+        solution,data = CubQMCML(integrand,rmse_tol=tol/2.58).integrate()
         exact_value = integrand.get_exact_value()
         self.assertTrue(abs(solution-exact_value) < tol)
 

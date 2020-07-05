@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from .._discrete_distribution import DiscreteDistribution
 from .mps_sobol import DigitalSeq
 from ..qrng import sobol_qrng
@@ -10,6 +12,33 @@ class Sobol(DiscreteDistribution):
     """
     Quasi-Random Sobol nets in base 2.
     
+    >>> s = Sobol(2,seed=7)
+    >>> s
+    Sobol (DiscreteDistribution Object)
+        dimension       2^(1)
+        randomize       1
+        seed            7
+        backend         qrng
+        mimics          StdUniform
+        graycode        0
+    >>> s.gen_samples(4)
+    array([[0.982, 0.883],
+           [0.482, 0.383],
+           [0.732, 0.133],
+           [0.232, 0.633]])
+    >>> s.set_dimension(3)
+    >>> s.gen_samples(n_min=4,n_max=8)
+    array([[0.857, 0.258, 0.226],
+           [0.357, 0.758, 0.726],
+           [0.607, 0.508, 0.976],
+           [0.107, 0.008, 0.476]])
+    >>> Sobol(dimension=2,randomize=False,graycode=True).gen_samples(n_min=2,n_max=4)
+    array([[0.75, 0.25],
+           [0.25, 0.75]])
+    >>> Sobol(dimension=2,randomize=False,graycode=False).gen_samples(n_min=2,n_max=4)
+    array([[0.25, 0.75],
+           [0.75, 0.25]])
+           
     References
         Marius Hofert and Christiane Lemieux (2019). 
         qrng: (Randomized) Quasi-Random Number Generators. 
@@ -17,7 +46,7 @@ class Sobol(DiscreteDistribution):
         https://CRAN.R-project.org/package=qrng.
 
         Faure, Henri, and Christiane Lemieux. 
-        “Implementation of Irreducible Sobol’ Sequences in Prime Power Bases.” 
+        “Implementation of Irreducible Sobol' Sequences in Prime Power Bases.” 
         Mathematics and Computers in Simulation 161 (2019): 13–22. Crossref. Web.
 
         F.Y. Kuo & D. Nuyens.
@@ -32,19 +61,22 @@ class Sobol(DiscreteDistribution):
         https://people.cs.kuleuven.be/~dirk.nuyens/
     """
     
-    parameters = ['dimension','scramble','seed','backend','mimics']
+    parameters = ['dimension','randomize','seed','backend','mimics','graycode']
 
-    def __init__(self, dimension=1, scramble=True, seed=None, backend='QRNG'):
+    def __init__(self, dimension=1, randomize=True, seed=None, backend='QRNG', graycode=False):
         """
         Args:
             dimension (int): dimension of samples
-            scramble (bool): If True, apply unique scramble to each replication        
+            randomize (bool): If True, apply digital shift to generated samples        
             seed (int): seed the random number generator for reproducibility
-            backend (str): backend generator
+            backend (str): backend generator must be either "QRNG" or "MPS". 
+                "QRNG" is significantly faster, supports optional randomization, and supports optional graycode ordering
+            graycode (bool): indicator to use graycode ordering (True) or natural ordering (False)
         """
         self.dimension = dimension
-        self.scramble = scramble
+        self.randomize = randomize
         self.seed = seed
+        self.graycode = graycode
         self.backend = backend.lower()
         if self.backend == 'qrng':
             self.backend_gen = self.qrgn_sobol_gen
@@ -55,7 +87,7 @@ class Sobol(DiscreteDistribution):
             # correction factor to scale the integers
             self.ct = max(0, self.t - self.mps_sobol_rng.t)
             self.backend_gen = self.mps_sobol_gen
-            if not self.scramble:
+            if not self.randomize:
                 warning_s = '''
                 Sobol MPS unscrambled samples are not in the domain [0,1)'''
                 warnings.warn(warning_s, ParameterWarning)
@@ -64,12 +96,17 @@ class Sobol(DiscreteDistribution):
             raise ParameterError('''
                 PyTorch SobolEngine issue. See https://github.com/pytorch/pytorch/issues/32047
                     SobolEngine 0^{th} vector is \\vec{.5} rather than \\vec{0}
-                    SobolEngine sometimes generates 1 after applying scramble''')
+                    SobolEngine sometimes generates 1 after applying randomize''')
         else:
             raise ParameterError("Sobol backend must be either 'qrng', 'mps', or 'pytorch'")
+        if self.backend != 'qrng' and (not self.graycode):
+            warning_s = '''
+                %s backend does not (yet) support natural ordering.
+                Using graycode ordering. Use "QRNG" backend for natural ordering'''%self.backend
+            warnings.warn(warning_s,ParameterWarning)
         self.mimics = 'StdUniform'
         self.set_seed(self.seed)
-        super().__init__()
+        super(Sobol,self).__init__()
         
     def qrgn_sobol_gen(self, n_min=0, n_max=8):
         """
@@ -80,7 +117,7 @@ class Sobol(DiscreteDistribution):
             n_max (int): maximum index (not inclusive)
         """
         n = int(n_max-n_min)
-        x_sob = sobol_qrng(n,self.dimension,self.scramble,skip=int(n_min),seed=self.seed)
+        x_sob = sobol_qrng(n,self.dimension,self.randomize,skip=int(n_min),graycode=self.graycode,seed=self.seed)
         return x_sob
 
     def mps_sobol_gen(self, n_min=0, n_max=8):
@@ -97,7 +134,7 @@ class Sobol(DiscreteDistribution):
         for i in range(n):
             next(self.mps_sobol_rng)
             x_sob[i, :] = self.mps_sobol_rng.cur
-        if self.scramble:
+        if self.randomize:
             x_sob = (self.shift ^ (x_sob * 2 ** self.ct)) / 2. ** self.t
         return x_sob
     
@@ -111,7 +148,7 @@ class Sobol(DiscreteDistribution):
         """
         from torch.quasirandom import SobolEngine 
         n = int(n_max-n_min)
-        se = SobolEngine(dimension=self.dimension, scramble=self.scramble, seed=self.seed)
+        se = SobolEngine(dimension=self.dimension, randomize=self.randomize, seed=self.seed)
         se.fast_forward(n_min)
         x_sob = se.draw(n).numpy()
         return x_sob
@@ -134,7 +171,7 @@ class Sobol(DiscreteDistribution):
             n_max = n 
         if log2(n_max) % 1 != 0:
             raise ParameterError("n_max must be a power of 2")
-        if not (n_min == 0 or n_min == n_max/2):
+        if not (n_min == 0 or n_min == float(n_max)/2):
             raise ParameterError("n_min must be 0 or n_max/2")
         x_sob = self.backend_gen(n_min,n_max)
         return x_sob

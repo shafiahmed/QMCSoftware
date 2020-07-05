@@ -1,9 +1,26 @@
 from ._discrete_distribution import DiscreteDistribution
-from numpy.random import Generator, PCG64
+from numpy import random
 
 
 class IIDStdGaussian(DiscreteDistribution):
-
+    """
+    >>> dd = IIDStdGaussian(dimension=2,seed=7)
+    >>> dd
+    IIDStdGaussian (DiscreteDistribution Object)
+        dimension       2^(1)
+        seed            7
+        mimics          StdGaussian
+    >>> dd.gen_samples(4)
+    array([[ 1.691e+00, -4.659e-01],
+           [ 3.282e-02,  4.075e-01],
+           [-7.889e-01,  2.066e-03],
+           [-8.904e-04, -1.755e+00]])
+    >>> dd.set_dimension(3)
+    >>> x = dd.gen_samples(5)
+    >>> x.shape
+    (5, 3)
+    """
+    
     parameters = ['dimension', 'seed', 'mimics']
 
     def __init__(self, dimension=1, seed=None):
@@ -14,9 +31,9 @@ class IIDStdGaussian(DiscreteDistribution):
         """
         self.dimension = dimension
         self.seed = seed
-        self.rng = Generator(PCG64(self.seed))
+        random.seed(self.seed)
         self.mimics = 'StdGaussian'
-        super().__init__()
+        super(IIDStdGaussian,self).__init__()
 
     def gen_samples(self, n):
         """
@@ -28,7 +45,7 @@ class IIDStdGaussian(DiscreteDistribution):
         Returns:
             ndarray: n x d (dimension) array of samples
         """
-        return self.rng.standard_normal((int(n), self.dimension))
+        return random.randn(int(n), int(self.dimension))
     
     def set_dimension(self, dimension):
         """ See abstract method. """

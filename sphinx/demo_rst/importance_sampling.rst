@@ -50,8 +50,8 @@ With ordinary Monte Carlo we do the following:
 
     distribution = Lattice(2)
     measure = Uniform(distribution)
-    integral = QuickConstruct(measure,payoff)
-    solution1,data1 = CubLattice_g(integral, abs_tol).integrate()
+    integral = CustomFun(measure,payoff)
+    solution1,data1 = CubQMCLatticeG(integral, abs_tol).integrate()
     data1
 
 
@@ -59,28 +59,27 @@ With ordinary Monte Carlo we do the following:
 
 .. parsed-literal::
 
-    Solution: 0.4501         
-    QuickConstruct (Integrand Object)
+    Solution: 0.4500         
+    CustomFun (Integrand Object)
     Lattice (DiscreteDistribution Object)
-    	dimension       2
-    	scramble        1
-    	seed            None
-    	backend         gail
-    	mimics          StdUniform
+        dimension       2^(1)
+        randomize       1
+        seed            None
+        backend         gail
+        mimics          StdUniform
     Uniform (TrueMeasure Object)
-    	distrib_name    Lattice
-    	lower_bound     [ 0.000  0.000]
-    	upper_bound     [ 1.000  1.000]
-    CubLattice_g (StoppingCriterion Object)
-    	abs_tol         0.0010
-    	rel_tol         0
-    	n_init          1024
-    	n_max           34359738368
-    CubatureData (AccumulateData Object)
-    	n_total         65536
-    	solution        0.4501
-    	r_lag           4
-    	time_integrate  0.0616
+        lower_bound     [0. 0.]
+        upper_bound     [1. 1.]
+    CubQMCLatticeG (StoppingCriterion Object)
+        abs_tol         0.001
+        rel_tol         0
+        n_init          2^(10)
+        n_max           2^(35)
+    LDTransformData (AccumulateData Object)
+        n_total         2^(16)
+        solution        0.450
+        r_lag           2^(2)
+        time_integrate  0.043
 
 
 
@@ -93,26 +92,24 @@ with positive payoffs. Let
 .. math:: \boldsymbol{Z} = (X_1^{1/(p+1)}, X_2^{1/(p+1)}), \qquad \boldsymbol{X} \sim \mathcal{U}(0,1)^2
 
 This means that :math:`Z_1` and :math:`Z_2` are IID with common CDF
-:math:`F(z) =z^{p+1}` and common PDF
-:math:`\varrho(z) = (p+1)z^{p}`.Thus,
+:math:`F(z) =z^{p+1}` and common PDF :math:`\varrho(z) = (p+1)z^{p}`.
+Thus,
 
 .. math::
 
-   \begin{align}
-   \mu = \mathbb{E}(Y) &= \int_{[0,1]^2} \frac{\text{payoff}(z_1,z_2)}{(p+1)^2(z_1z_2)^{p}} \, \varrho(z_1)
+   \mu = \mathbb{E}(Y) =  \int_{[0,1]^2} \frac{\text{payoff}(z_1,z_2)}{(p+1)^2(z_1z_2)^{p}} \, \varrho(z_1)
    \varrho(z_2) \, \mathrm{d} z_1 \mathrm{d}z_2 \\
-   &= \int_{[0,1]^2}
+   = \int_{[0,1]^2}
    \frac{\text{payoff}(x_1^{1/(p+1)},x_2^{1/(p+1)})}{(p+1)^2(x_1x_2)^{p/(p+1)}}
    \, \mathrm{d} x_1 \mathrm{d}x_2
-   \end{align}
 
 .. code:: ipython3
 
     p = 1
     distribution = Lattice(2)
     measure = Uniform(distribution)
-    integral = QuickConstruct(measure,lambda x: payoff(x**(1/(p+1))) / ((p+1)**2 * (x.prod(1))**(p/(p+1))))
-    solution2,data2 = CubLattice_g(integral, abs_tol).integrate()
+    integral = CustomFun(measure,lambda x: payoff(x**(1/(p+1))) / ((p+1)**2 * (x.prod(1))**(p/(p+1))))
+    solution2,data2 = CubQMCLatticeG(integral, abs_tol).integrate()
     data2
 
 
@@ -120,28 +117,27 @@ This means that :math:`Z_1` and :math:`Z_2` are IID with common CDF
 
 .. parsed-literal::
 
-    Solution: 0.4489         
-    QuickConstruct (Integrand Object)
+    Solution: 0.4505         
+    CustomFun (Integrand Object)
     Lattice (DiscreteDistribution Object)
-    	dimension       2
-    	scramble        1
-    	seed            None
-    	backend         gail
-    	mimics          StdUniform
+        dimension       2^(1)
+        randomize       1
+        seed            None
+        backend         gail
+        mimics          StdUniform
     Uniform (TrueMeasure Object)
-    	distrib_name    Lattice
-    	lower_bound     [ 0.000  0.000]
-    	upper_bound     [ 1.000  1.000]
-    CubLattice_g (StoppingCriterion Object)
-    	abs_tol         0.0010
-    	rel_tol         0
-    	n_init          1024
-    	n_max           34359738368
-    CubatureData (AccumulateData Object)
-    	n_total         16384
-    	solution        0.4489
-    	r_lag           4
-    	time_integrate  0.0210
+        lower_bound     [0. 0.]
+        upper_bound     [1. 1.]
+    CubQMCLatticeG (StoppingCriterion Object)
+        abs_tol         0.001
+        rel_tol         0
+        n_init          2^(10)
+        n_max           2^(35)
+    LDTransformData (AccumulateData Object)
+        n_total         2^(14)
+        solution        0.451
+        r_lag           2^(2)
+        time_integrate  0.014
 
 
 
@@ -153,7 +149,7 @@ This means that :math:`Z_1` and :math:`Z_2` are IID with common CDF
 
 .. parsed-literal::
 
-    Imporance Sampling takes 0.341 the time and 0.250 the samples
+    Imporance Sampling takes 0.328 the time and 0.250 the samples
 
 
 Asian Call Option Example
@@ -172,17 +168,17 @@ multidimensional integral
    \boldsymbol{x}\bigr)}
    {\sqrt{(2 \pi)^{d} \det(\mathsf{\Sigma})}} \, \mathrm{d} \boldsymbol{x}
 
-where
+ where
 
-:raw-latex:`\begin{align*} 
-\boldsymbol{X} & \sim \mathcal{N}(\boldsymbol{0}, \mathsf{\Sigma}), \qquad
-\mathsf{\Sigma} = \bigl(\min(j,k)T/d \bigr)_{j,k=1}^d, \\
-d & =  13 \text{ in this case} \\
-f(\boldsymbol{x}) & = \max\biggl(K - \frac 1d \sum_{j=1}^d
-S(jT/d,\boldsymbol{x}), 0 \biggr) \mathrm{e}^{-rT}, \\
-S(jT/d,\boldsymbol{x}) &= S(0) \exp\bigl((r - \sigma^2/2) jT/d +
-\sigma x_j\bigr).
-\end{align*}`
+.. math::
+
+   \boldsymbol{X}  \sim \mathcal{N}(\boldsymbol{0}, \mathsf{\Sigma}), \qquad
+   \mathsf{\Sigma} = \bigl(\min(j,k)T/d \bigr)_{j,k=1}^d,  \qquad
+   d  =  13, \\
+   f(\boldsymbol{x})  = \max\biggl(K - \frac 1d \sum_{j=1}^d
+   S(jT/d,\boldsymbol{x}), 0 \biggr) \mathrm{e}^{-rT}, \\
+   S(jT/d,\boldsymbol{x}) = S(0) \exp\bigl((r - \sigma^2/2) jT/d +
+   \sigma x_j\bigr).
 
 We will replace :math:`\boldsymbol{X}` by
 
@@ -195,25 +191,26 @@ where a positive :math:`a` will create more positive payoffs. This
 corresponds to giving our Brownian motion a drift. To do this we
 re-write the integral as
 
-:raw-latex:`\begin{gather*} 
-\mu = \mathbb{E}[f_{\mathrm{new}}(\boldsymbol{Z})] 
-= \int_{\mathbb{R}^d}
-f_{\mathrm{new}}(\boldsymbol{z}) 
-\frac{\exp\bigl(-\frac{1}{2} (\boldsymbol{z}-\boldsymbol{a})^T
-\mathsf{\Sigma}^{-1}
-(\boldsymbol{z} - \boldsymbol{a}) \bigr)}
-{\sqrt{(2 \pi)^{d} \det(\mathsf{\Sigma})}} \, \mathrm{d} \boldsymbol{z} ,
-\\
-f_{\mathrm{new}}(\boldsymbol{z}) = 
-f(\boldsymbol{z}) 
-\frac{\exp\bigl(-\frac{1}{2} \boldsymbol{z}^T
-\mathsf{\Sigma}^{-1} \boldsymbol{z} \bigr)}
-{\exp\bigl(-\frac{1}{2} (\boldsymbol{z}-\boldsymbol{a})^T
-\mathsf{\Sigma}^{-1}
-(\boldsymbol{z} - \boldsymbol{a}) \bigr)}
-= f(\boldsymbol{z}) \exp\bigl((\boldsymbol{a}/2 - \boldsymbol{z})^T
-\mathsf{\Sigma}^{-1}\boldsymbol{a} \bigr)
-\end{gather*}`
+.. math::
+
+    
+   \mu = \mathbb{E}[f_{\mathrm{new}}(\boldsymbol{Z})] 
+   = \int_{\mathbb{R}^d}
+   f_{\mathrm{new}}(\boldsymbol{z}) 
+   \frac{\exp\bigl(-\frac{1}{2} (\boldsymbol{z}-\boldsymbol{a})^T
+   \mathsf{\Sigma}^{-1}
+   (\boldsymbol{z} - \boldsymbol{a}) \bigr)}
+   {\sqrt{(2 \pi)^{d} \det(\mathsf{\Sigma})}} \, \mathrm{d} \boldsymbol{z} ,
+   \\
+   f_{\mathrm{new}}(\boldsymbol{z}) = 
+   f(\boldsymbol{z}) 
+   \frac{\exp\bigl(-\frac{1}{2} \boldsymbol{z}^T
+   \mathsf{\Sigma}^{-1} \boldsymbol{z} \bigr)}
+   {\exp\bigl(-\frac{1}{2} (\boldsymbol{z}-\boldsymbol{a})^T
+   \mathsf{\Sigma}^{-1}
+   (\boldsymbol{z} - \boldsymbol{a}) \bigr)}
+   = f(\boldsymbol{z}) \exp\bigl((\boldsymbol{a}/2 - \boldsymbol{z})^T
+   \mathsf{\Sigma}^{-1}\boldsymbol{a} \bigr)
 
 Finally note that
 
@@ -224,7 +221,7 @@ Finally note that
    f(\boldsymbol{z}) \exp\bigl((aT/2 - z_d)a \bigr)
 
 This drift in the Brownian motion may be implemented by changing the
-``mean_shift_is`` input to the ``BrownianMotion`` object.
+``drift`` input to the ``BrownianMotion`` object.
 
 .. code:: ipython3
 
@@ -237,7 +234,7 @@ This drift in the Brownian motion may be implemented by changing the
         for i in range(n_plt): ax.plot(measure.time_vector,samples[i])
         ax.set_xlabel('time')
         ax.set_ylabel('option price')
-        ax.set_title('Brownian Motion with Mean Shift %.1f'%measure.mean_shift_is)
+        ax.set_title('Brownian Motion with Mean Shift %.1f'%measure.drift)
         plt.show()
 
 Vanilla Monte Carlo
@@ -245,10 +242,10 @@ Vanilla Monte Carlo
 
 .. code:: ipython3
 
-    distribution = Lattice(dimension)
+    distribution = Sobol(dimension)
     measure = BrownianMotion(distribution)
     integrand = AsianCall(measure)
-    solution1,data1 = CubLattice_g(integrand, abs_tol).integrate()
+    solution1,data1 = CubQMCSobolG(integrand, abs_tol).integrate()
     data1
 
 
@@ -256,35 +253,35 @@ Vanilla Monte Carlo
 
 .. parsed-literal::
 
-    Solution: 1.8108         
+    Solution: 1.7835         
     AsianCall (Integrand Object)
-    	volatility      0.5000
-    	start_price     30
-    	strike_price    35
-    	interest_rate   0
-    	mean_type       arithmetic
-    	dimensions      32
-    	dim_fracs       0
-    Lattice (DiscreteDistribution Object)
-    	dimension       32
-    	scramble        1
-    	seed            None
-    	backend         gail
-    	mimics          StdUniform
+        volatility      2^(-1)
+        start_price     30
+        strike_price    35
+        interest_rate   0
+        mean_type       arithmetic
+        dimensions      2^(5)
+        dim_fracs       0
+    Sobol (DiscreteDistribution Object)
+        dimension       2^(5)
+        randomize       1
+        seed            965676770
+        backend         qrng
+        mimics          StdUniform
+        graycode        0
     BrownianMotion (TrueMeasure Object)
-    	distrib_name    Lattice
-    	time_vector     [ 0.031  0.062  0.094 ...  0.938  0.969  1.000]
-    	mean_shift_is   0
-    CubLattice_g (StoppingCriterion Object)
-    	abs_tol         0.0100
-    	rel_tol         0
-    	n_init          1024
-    	n_max           34359738368
-    CubatureData (AccumulateData Object)
-    	n_total         16384
-    	solution        1.8108
-    	r_lag           4
-    	time_integrate  0.1088
+        time_vector     [0.031 0.062 0.094 ... 0.938 0.969 1.   ]
+        drift           0
+    CubQMCSobolG (StoppingCriterion Object)
+        abs_tol         0.010
+        rel_tol         0
+        n_init          2^(10)
+        n_max           2^(35)
+    LDTransformData (AccumulateData Object)
+        n_total         2^(14)
+        solution        1.783
+        r_lag           2^(2)
+        time_integrate  0.074
 
 
 
@@ -302,11 +299,11 @@ Monte Carlo with Importance Sampling
 
 .. code:: ipython3
 
-    mean_shift_is = 1
-    distribution = Lattice(dimension)
-    measure = BrownianMotion(distribution,mean_shift_is)
+    drift = 1
+    distribution = Sobol(dimension)
+    measure = BrownianMotion(distribution,drift)
     integrand = AsianCall(measure)
-    solution2,data2 = CubLattice_g(integrand, abs_tol).integrate()
+    solution2,data2 = CubQMCSobolG(integrand, abs_tol).integrate()
     data2
 
 
@@ -314,35 +311,35 @@ Monte Carlo with Importance Sampling
 
 .. parsed-literal::
 
-    Solution: 1.8168         
+    Solution: 1.7932         
     AsianCall (Integrand Object)
-    	volatility      0.5000
-    	start_price     30
-    	strike_price    35
-    	interest_rate   0
-    	mean_type       arithmetic
-    	dimensions      32
-    	dim_fracs       0
-    Lattice (DiscreteDistribution Object)
-    	dimension       32
-    	scramble        1
-    	seed            None
-    	backend         gail
-    	mimics          StdUniform
+        volatility      2^(-1)
+        start_price     30
+        strike_price    35
+        interest_rate   0
+        mean_type       arithmetic
+        dimensions      2^(5)
+        dim_fracs       0
+    Sobol (DiscreteDistribution Object)
+        dimension       2^(5)
+        randomize       1
+        seed            1909761169
+        backend         qrng
+        mimics          StdUniform
+        graycode        0
     BrownianMotion (TrueMeasure Object)
-    	distrib_name    Lattice
-    	time_vector     [ 0.031  0.062  0.094 ...  0.938  0.969  1.000]
-    	mean_shift_is   1
-    CubLattice_g (StoppingCriterion Object)
-    	abs_tol         0.0100
-    	rel_tol         0
-    	n_init          1024
-    	n_max           34359738368
-    CubatureData (AccumulateData Object)
-    	n_total         4096
-    	solution        1.8168
-    	r_lag           4
-    	time_integrate  0.0330
+        time_vector     [0.031 0.062 0.094 ... 0.938 0.969 1.   ]
+        drift           1
+    CubQMCSobolG (StoppingCriterion Object)
+        abs_tol         0.010
+        rel_tol         0
+        n_init          2^(10)
+        n_max           2^(35)
+    LDTransformData (AccumulateData Object)
+        n_total         2^(12)
+        solution        1.793
+        r_lag           2^(2)
+        time_integrate  0.018
 
 
 
@@ -363,7 +360,7 @@ Monte Carlo with Importance Sampling
 
 .. parsed-literal::
 
-    Imporance Sampling takes 0.304 the time and 0.250 the samples
+    Imporance Sampling takes 0.240 the time and 0.250 the samples
 
 
 Importance Sampling MC vs QMC
@@ -377,13 +374,14 @@ Importance Sampling MC vs QMC
 
 .. code:: ipython3
 
-    df = pd.read_csv('../outputs/mc_vs_qmc/importance_sampling_compare_mean_shifts.csv')
+    df = pd.read_csv('../outputs/mc_vs_qmc/importance_sampling.csv')
     df['Problem'] = df['Stopping Criterion'] + ' ' + df['Distribution'] + ' (' + df['MC/QMC'] + ')'
     df = df.drop(['Stopping Criterion','Distribution','MC/QMC'],axis=1)
-    problems = ['CLT IIDStdUniform (MC)',
-                'MeanMC_g IIDStdGaussian (MC)',
-                'CLTRep Sobol (QMC)',
-                'CubLattice_g Lattice (QMC)']
+    problems = ['CubMCCLT IIDStdUniform (MC)',
+                'CubMCG IIDStdGaussian (MC)',
+                'CubQMCCLT Sobol (QMC)',
+                'CubQMCLatticeG Lattice (QMC)',
+                'CubQMCSobolG Sobol (QMC)']
     df = df[df['Problem'].isin(problems)]
     mean_shifts = df.mean_shift.unique()
     df_samples = df.groupby(['Problem'])['n_samples'].apply(list).reset_index(name='n')
@@ -429,60 +427,74 @@ Importance Sampling MC vs QMC
       </thead>
       <tbody>
         <tr>
-          <th>CLT IIDStdUniform (MC)</th>
-          <td>0.00e+00</td>
-          <td>1.78e+00</td>
-          <td>3.24e+05</td>
-          <td>6.21e-01</td>
-        </tr>
-        <tr>
-          <th>CLT IIDStdUniform (MC)</th>
-          <td>1.00e+00</td>
-          <td>1.79e+00</td>
-          <td>8.22e+04</td>
-          <td>1.68e-01</td>
-        </tr>
-        <tr>
-          <th>MeanMC_g IIDStdGaussian (MC)</th>
+          <th>CubMCCLT IIDStdUniform (MC)</th>
           <td>0.00e+00</td>
           <td>1.79e+00</td>
-          <td>4.82e+05</td>
-          <td>3.78e-01</td>
+          <td>2.84e+05</td>
+          <td>5.63e-01</td>
         </tr>
         <tr>
-          <th>MeanMC_g IIDStdGaussian (MC)</th>
+          <th>CubMCCLT IIDStdUniform (MC)</th>
           <td>1.00e+00</td>
-          <td>1.77e+00</td>
-          <td>1.27e+05</td>
-          <td>1.07e-01</td>
+          <td>1.79e+00</td>
+          <td>7.66e+04</td>
+          <td>1.71e-01</td>
         </tr>
         <tr>
-          <th>CLTRep Sobol (QMC)</th>
+          <th>CubMCG IIDStdGaussian (MC)</th>
+          <td>0.00e+00</td>
+          <td>1.79e+00</td>
+          <td>4.36e+05</td>
+          <td>4.48e-01</td>
+        </tr>
+        <tr>
+          <th>CubMCG IIDStdGaussian (MC)</th>
+          <td>1.00e+00</td>
+          <td>1.80e+00</td>
+          <td>1.18e+05</td>
+          <td>1.47e-01</td>
+        </tr>
+        <tr>
+          <th>CubQMCCLT Sobol (QMC)</th>
           <td>0.00e+00</td>
           <td>1.78e+00</td>
           <td>1.64e+04</td>
-          <td>5.61e-02</td>
+          <td>4.12e-02</td>
         </tr>
         <tr>
-          <th>CLTRep Sobol (QMC)</th>
+          <th>CubQMCCLT Sobol (QMC)</th>
           <td>1.00e+00</td>
           <td>1.79e+00</td>
           <td>1.64e+04</td>
-          <td>5.19e-02</td>
+          <td>4.15e-02</td>
         </tr>
         <tr>
-          <th>CubLattice_g Lattice (QMC)</th>
+          <th>CubQMCLatticeG Lattice (QMC)</th>
           <td>0.00e+00</td>
           <td>1.75e+00</td>
           <td>4.10e+03</td>
-          <td>2.07e-02</td>
+          <td>1.79e-02</td>
         </tr>
         <tr>
-          <th>CubLattice_g Lattice (QMC)</th>
+          <th>CubQMCLatticeG Lattice (QMC)</th>
           <td>1.00e+00</td>
           <td>1.81e+00</td>
           <td>1.02e+03</td>
-          <td>5.78e-03</td>
+          <td>4.13e-03</td>
+        </tr>
+        <tr>
+          <th>CubQMCSobolG Sobol (QMC)</th>
+          <td>0.00e+00</td>
+          <td>1.79e+00</td>
+          <td>4.10e+03</td>
+          <td>1.59e-02</td>
+        </tr>
+        <tr>
+          <th>CubQMCSobolG Sobol (QMC)</th>
+          <td>1.00e+00</td>
+          <td>1.81e+00</td>
+          <td>1.02e+03</td>
+          <td>2.95e-03</td>
         </tr>
       </tbody>
     </table>
@@ -516,7 +528,111 @@ Importance Sampling MC vs QMC
 
 
 
-.. image:: importance_sampling_files/importance_sampling_20_0.png
+
+.. parsed-literal::
+
+    <BarContainer object of 5 artists>
+
+
+
+
+
+.. parsed-literal::
+
+    <BarContainer object of 5 artists>
+
+
+
+
+
+.. parsed-literal::
+
+    <BarContainer object of 5 artists>
+
+
+
+
+
+.. parsed-literal::
+
+    <BarContainer object of 5 artists>
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0.98, 'Importance Sampling Comparison by Stopping Criterion on Asian Call Option')
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0, 'log(Samples)')
+
+
+
+
+
+.. parsed-literal::
+
+    <matplotlib.legend.Legend at 0x7f8b183afa10>
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0, 'Time')
+
+
+
+
+
+.. parsed-literal::
+
+    <matplotlib.legend.Legend at 0x7f8b183afa90>
+
+
+
+
+
+.. parsed-literal::
+
+    []
+
+
+
+
+
+.. parsed-literal::
+
+    [<matplotlib.axis.YTick at 0x7f8b38eaff10>,
+     <matplotlib.axis.YTick at 0x7f8b78fd7dd0>,
+     <matplotlib.axis.YTick at 0x7f8b78fd2ed0>,
+     <matplotlib.axis.YTick at 0x7f8b1841e3d0>,
+     <matplotlib.axis.YTick at 0x7f8b1841e890>]
+
+
+
+
+
+.. parsed-literal::
+
+    [Text(0, 0, 'CubMCCLT IIDStdUniform (MC)'),
+     Text(0, 0, 'CubMCG IIDStdGaussian (MC)'),
+     Text(0, 0, 'CubQMCCLT Sobol (QMC)'),
+     Text(0, 0, 'CubQMCLatticeG Lattice (QMC)'),
+     Text(0, 0, 'CubQMCSobolG Sobol (QMC)')]
+
+
+
+
+.. image:: importance_sampling_files/importance_sampling_20_12.png
 
 
 .. code:: ipython3
@@ -536,6 +652,79 @@ Importance Sampling MC vs QMC
 
 
 
-.. image:: importance_sampling_files/importance_sampling_21_0.png
 
+.. parsed-literal::
+
+    0     [Line2D(CubMCCLT IIDStdUniform (MC))]
+    1      [Line2D(CubMCG IIDStdGaussian (MC))]
+    2           [Line2D(CubQMCCLT Sobol (QMC))]
+    3    [Line2D(CubQMCLatticeG Lattice (QMC))]
+    4        [Line2D(CubQMCSobolG Sobol (QMC))]
+    dtype: object
+
+
+
+
+
+.. parsed-literal::
+
+    0     [Line2D(CubMCCLT IIDStdUniform (MC))]
+    1      [Line2D(CubMCG IIDStdGaussian (MC))]
+    2           [Line2D(CubQMCCLT Sobol (QMC))]
+    3    [Line2D(CubQMCLatticeG Lattice (QMC))]
+    4        [Line2D(CubQMCSobolG Sobol (QMC))]
+    dtype: object
+
+
+
+
+
+.. parsed-literal::
+
+    <matplotlib.legend.Legend at 0x7f8b489be310>
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0, 0.5, 'log(samples)')
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0, 0.5, 'log(time)')
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0, 'mean shift')
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0, 'mean shift')
+
+
+
+
+
+.. parsed-literal::
+
+    Text(0.5, 0.98, 'Comparing Mean Shift Across Problems')
+
+
+
+
+.. image:: importance_sampling_files/importance_sampling_21_8.png
 

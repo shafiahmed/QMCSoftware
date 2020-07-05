@@ -3,7 +3,10 @@
 from qmcpy import *
 from qmcpy.util import *
 from numpy import *
-import unittest
+import sys
+vinvo = sys.version_info
+if vinvo[0]==3: import unittest
+else: import unittest2 as unittest
 
         
 class TestUniform(unittest.TestCase):
@@ -127,23 +130,23 @@ class TestLebesgue(unittest.TestCase):
         self.assertRaises(DimensionError,measure.set_dimension,3)
 
 
-class TestIdentityTransform(unittest.TestCase):
-    """ Unit tests for IdentityTransform Measure. """
+class TestIdentitalToDiscrete(unittest.TestCase):
+    """ Unit tests for IdentitalToDiscrete Measure. """
 
     def test_gen_mimic_samples(self):
         distribution = CustomIIDDistribution(lambda n: random.poisson(lam=5,size=(n,2)))
-        measure = IdentityTransform(distribution)
+        measure = IdentitalToDiscrete(distribution)
         samples = measure.gen_mimic_samples(n=5)
     
     def test_transform_g_to_f(self):
         # implicitly called from Integrand superclass constructor
         distribution = CustomIIDDistribution(lambda n: random.poisson(lam=5,size=(n,2)))
-        measure = IdentityTransform(distribution)
+        measure = IdentitalToDiscrete(distribution)
         Keister(measure)
     
     def test_set_dimension(self):
         distribution = CustomIIDDistribution(lambda n: random.poisson(lam=5,size=(n,2)))
-        measure = IdentityTransform(distribution)
+        measure = IdentitalToDiscrete(distribution)
         self.assertRaises(DimensionError,measure.set_dimension,3)
 
 

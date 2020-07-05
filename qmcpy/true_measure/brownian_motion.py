@@ -1,4 +1,5 @@
 from ._true_measure import TrueMeasure
+from ..discrete_distribution import Sobol
 from ..util import TransformError, ParameterError
 from numpy import linspace, cumsum, diff, insert, sqrt, array, exp, array, dot
 from scipy.stats import norm
@@ -6,27 +7,49 @@ from scipy.linalg import cholesky
 
 
 class BrownianMotion(TrueMeasure):
-    """ Geometric Brownian Motion """
+    """
+    Geometric Brownian Motion.
+    
+    >>> dd = Sobol(2,seed=7)
+    >>> bm = BrownianMotion(dd,drift=1)
+    >>> bm
+    BrownianMotion (TrueMeasure Object)
+        time_vector     [0.5 1. ]
+        drift           1
+    >>> bm.gen_mimic_samples(n_min=4,n_max=8)
+    array([[ 1.254,  1.296],
+           [ 0.241,  1.237],
+           [ 0.692,  1.207],
+           [-0.379, -1.567]])
+    >>> bm.set_dimension(4)
+    >>> bm
+    BrownianMotion (TrueMeasure Object)
+        time_vector     [0.25 0.5  0.75 1.  ]
+        drift           1
+    >>> bm.gen_mimic_samples(n_min=2,n_max=4)
+    array([[ 0.559,  0.254,  0.632,  0.696],
+           [-0.116,  0.304, -0.084,  0.694]])
+    """
 
-    parameters = ['time_vector','mean_shift_is']
+    parameters = ['time_vector','drift']
 
-    def __init__(self, distribution, mean_shift_is=0):
+    def __init__(self, distribution, drift=0.):
         """
         Args:
             distribution (DiscreteDistribution): DiscreteDistribution instance
-            mean_shift_is (float): mean shift for importance sampling. 
+            drift (float): mean shift for importance sampling. 
         """
         self.distribution = distribution
-        self.mean_shift_is = mean_shift_is
+        self.drift = float(drift)
         self.d = self.distribution.dimension
         self.time_vector = linspace(1./self.d,1,self.d) # evenly spaced
-        self.ms_vec = self.mean_shift_is * self.time_vector
+        self.ms_vec = self.drift * self.time_vector
         sigma = array([[min(self.time_vector[i],self.time_vector[j])
                         for i in range(self.d)]
                         for j in range(self.d)])
         self.a = cholesky(sigma).T
-        self.t = 1
-        super().__init__()
+        self.t = 1.
+        super(BrownianMotion,self).__init__()
     
     def _tf_to_mimic_samples(self, samples):
         """
@@ -54,7 +77,7 @@ class BrownianMotion(TrueMeasure):
         """ See abstract method. """
         def f(samples, *args, **kwargs):
             z = self._tf_to_mimic_samples(samples)
-            y = g(z,*args,**kwargs) * exp( (self.mean_shift_is*self.t/2 - z[:,-1]) * self.mean_shift_is)
+            y = g(z,*args,**kwargs) * exp( (self.drift*self.t/2. - z[:,-1]) * self.drift)
             return y
         return f
     
@@ -74,7 +97,7 @@ class BrownianMotion(TrueMeasure):
         self.distribution.set_dimension(dimension)
         self.d = dimension
         self.time_vector = linspace(1./self.d,1,self.d)
-        self.ms_vec = self.mean_shift_is * self.time_vector
+        self.ms_vec = self.drift * self.time_vector
         sigma = array([[min(self.time_vector[i],self.time_vector[j])
                         for i in range(self.d)]
                         for j in range(self.d)])

@@ -1,14 +1,26 @@
 from ._true_measure import TrueMeasure
+from ..discrete_distribution import Sobol
 from ..util import TransformError, ParameterError
 from numpy import array, isfinite, inf, isscalar, tile
 from scipy.stats import norm
 
 
 class Lebesgue(TrueMeasure):
+    """
+    >>> dd = Sobol(2,seed=7)
+    >>> Lebesgue(dd,lower_bound=[-1,0],upper_bound=[1,3])
+    Lebesgue (TrueMeasure Object)
+        lower_bound     [-1  0]
+        upper_bound     [1 3]
+    >>> Lebesgue(dd,lower_bound=-inf,upper_bound=inf)
+    Lebesgue (TrueMeasure Object)
+        lower_bound     [-inf -inf]
+        upper_bound     [inf inf]
+    """
 
     parameters = ['lower_bound', 'upper_bound']
     
-    def __init__(self, distribution, lower_bound=0., upper_bound=1):
+    def __init__(self, distribution, lower_bound=0., upper_bound=1.):
         """
         Args:
             distribution (DiscreteDistribution): DiscreteDistribution instance
@@ -35,7 +47,7 @@ class Lebesgue(TrueMeasure):
         else:
             raise ParameterError('self.lower_bound and self.upper_bound must both be finite ' + \
                                  'or must be -inf,inf respectively')
-        super().__init__()
+        super(Lebesgue,self).__init__()
 
     def transform_g_to_f(self, g):
         """ See abstract method. """

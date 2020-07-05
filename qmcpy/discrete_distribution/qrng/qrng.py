@@ -1,4 +1,6 @@
-""" Interfaces to quasi-random sequences in C.
+# coding: utf-8
+"""
+Interfaces to quasi-random sequences in C.
 
 References
     Marius Hofert and Christiane Lemieux (2019). 
@@ -14,13 +16,14 @@ References
 import ctypes
 import numpy
 import os
-import platform
+from glob import glob
+
+ispow2 = lambda n: (numpy.log2(n)%1) == 0.
 
 # load library
-my_os = platform.system()
-os_ext = {'Linux':'so', 'Darwin':'dylib', 'Windows':'dll'}
 path = os.path.dirname(os.path.abspath(__file__))
-lib = ctypes.CDLL(path+'/qrng_lib.'+os_ext[my_os],mode=ctypes.RTLD_GLOBAL)
+f = glob(path+'/qrng_lib*')[0]
+lib = ctypes.CDLL(f,mode=ctypes.RTLD_GLOBAL)
 # MRG63k3a
 mrg63ka_f = lib.MRG63k3a
 mrg63ka_f.argtypes = None
@@ -52,6 +55,7 @@ sobol_f.argtypes = [
     ctypes.c_int,  # randomize
     numpy.ctypeslib.ndpointer(ctypes.c_double, flags='C_CONTIGUOUS'),  # res
     ctypes.c_int,  # skip
+    ctypes.c_int, # graycode
     ctypes.c_long]  # seed
 sobol_f.restype = None
 
@@ -59,6 +63,7 @@ sobol_f.restype = None
 def korobov_qrng(n, d, generator, randomize, seed):
     """
     Korobov's sequence
+    
     Args:
         n (int): number of points (>= 2 as generator has to be in {1,..,n-1}
         d (int): dimension
@@ -67,6 +72,7 @@ def korobov_qrng(n, d, generator, randomize, seed):
             or a single number (which is appropriately extended)
         randomize (boolean): random shift
         seed (int): random number generator seed
+    
     Return:
         result (ndarray): (n, d)-matrix containing the quasi-random sequence
     """
@@ -90,12 +96,14 @@ def korobov_qrng(n, d, generator, randomize, seed):
 def ghalton_qrng(n, d, generalize, seed):
     """
     Generalized Halton sequence
+    
     Args:
         n (int): number of points
         d (int): dimension
         generalize (bool): string indicating which sequence is generated
             (generalized Halton (1) or (plain) Halton (0))
         seed (int): random number generator seed
+    
     Return:
         res (ndarray): an (n, d)-matrix containing the quasi-random sequence
     """
@@ -110,14 +118,18 @@ def ghalton_qrng(n, d, generalize, seed):
     return res.T
 
 
-def sobol_qrng(n, d, scramble, skip, seed):
+def sobol_qrng(n, d, shift, skip, graycode, seed):
     """
     Sobol sequence
+
     Args:
         n (int): number of points
         d (int): dimension
-        randomize (boolean): apply digital shift scramble
+        shift (boolean): apply digital shift
         skip (int): number of initial points in the sequence to skip.
+        graycode (bool): indicator to use graycode ordering (True) or natural ordering (False)
+        seed (int): random number generator seed
+
     Return:
         res (ndarray): an (n, d)-matrix containing the quasi-random sequence
     """
@@ -125,10 +137,15 @@ def sobol_qrng(n, d, scramble, skip, seed):
         raise Exception('sobol_qrng input error')
     if n > (2**31 - 1):
         raise Exception('n must be <= 2^32-1')
+    if (not graycode) and not ( (skip==0 or ispow2(skip)) and ispow2(skip+n) ):
+        raise Exception('''
+            Using natural (non-graycode) ordering requires
+                skip is 0 or a power of 2
+                (skip+n) is a power of 2''')
     if d > 16510:
         raise Exception('d must be <= 16510')
     res = numpy.zeros((d, n), dtype=numpy.double)
-    sobol_f(n, d, scramble, res, skip, seed)
+    sobol_f(n, d, shift, res, skip, graycode, seed)
     return res.T
 
 def qrng_example_use(plot=False):
@@ -140,21 +157,21 @@ def qrng_example_use(plot=False):
     seed = 7
     # generate points
     #    MRG63k3a
-    t0 = time.perf_counter()
+    t0 = time.time()
     mrg63ka_pts = numpy.array([mrg63ka_f() for i in range(n * d)]).reshape((n, d))
-    mrg63ka_t = time.perf_counter() - t0
+    mrg63ka_t = time.time() - t0
     #    korobov
-    t0 = time.perf_counter()
+    t0 = time.time()
     korobov_pts = korobov_qrng(n, d, generator=[2], randomize=randomize, seed=seed)
-    korobov_t = time.perf_counter() - t0
+    korobov_t = time.time() - t0
     #    ghalton
-    t0 = time.perf_counter()
+    t0 = time.time()
     ghalton_pts = ghalton_qrng(n, d, generalize=True, seed=seed)
-    ghalton_t = time.perf_counter() - t0
+    ghalton_t = time.time() - t0
     #    sobol
-    t0 = time.perf_counter()
-    sobol_pts = sobol_qrng(n, d, scramble=randomize, skip=0, seed=7)
-    sobol_t = time.perf_counter() - t0
+    t0 = time.time()
+    sobol_pts = sobol_qrng(n, d, shift=randomize, skip=0, graycode=False, seed=7)
+    sobol_t = time.time() - t0
     # outputs
     from matplotlib import pyplot
     fig, ax = pyplot.subplots(nrows=1, ncols=4, figsize=(10, 3))
