@@ -5,6 +5,7 @@ from setuptools import Command
 import os
 import subprocess
 
+
 class CustomInstall(install):
     """Custom handler for the 'install' command."""
 
@@ -54,6 +55,20 @@ packages = [
     'qmcpy.discrete_distribution.sobol',
     'qmcpy.discrete_distribution.halton']
 
+module_qrng_lib = Extension(
+    'qmcpy.discrete_distribution.qrng.qrng_lib',
+    sources=['qmcpy/discrete_distribution/qrng/ghalton.c',
+             'qmcpy/discrete_distribution/qrng/korobov.c',
+             'qmcpy/discrete_distribution/qrng/MRG63k3a.c',
+             'qmcpy/discrete_distribution/qrng/sobol.c'],
+    # extra_compile_args=['/MD'],
+    # extra_link_args=['/NODEFAULTLIB:LIBCMT.LIB']
+    # cl.exe /D_USRDLL /D_WINDLL <files-to-compile> <files-to-link> /link /DLL /OUT:<desired-dll-name>.dll
+    # /LD
+    # extra_link_args=['/LD'],  # ['-fPIC','-shared','-lm'])],
+    # extra_compile_args = ['/D_USRDLL /D_WINDLL /link /DLL']
+)
+
 setuptools.setup(
     name="qmcpy",
     version="0.3.2c",
@@ -88,3 +103,4 @@ setuptools.setup(
     cmdclass={
         'clean': CleanCommand,
         'install': CustomInstall})
+
