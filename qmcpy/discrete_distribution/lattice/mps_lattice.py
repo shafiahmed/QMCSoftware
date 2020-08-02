@@ -24,7 +24,7 @@ Reference:
 
 from numpy import *
 
-def mps_lattice_gen(n_min, n_max, d, z):
+def mps_lattice_gen(n_min, n_max, d, z, linear=False):
     """
     Generate d dimensionsal lattice samples from n_min to n_max
     

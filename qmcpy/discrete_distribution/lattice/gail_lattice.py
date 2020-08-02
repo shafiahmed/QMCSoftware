@@ -40,7 +40,7 @@ def gen_block(m,z):
     x = outer(vdc(n)+1./(2*n_min),z)%1 if n_min>0 else outer(vdc(n),z)%1
     return x
 
-def gail_lattice_gen(n_min, n_max, d, z):
+def gail_lattice_gen(n_min, n_max, d, z, linear=False):
     """
     Generate d dimensionsal lattice samples from n_min to n_max
     
@@ -49,14 +49,24 @@ def gail_lattice_gen(n_min, n_max, d, z):
         n_min (int): minimum index.
         n_max (int): maximum index (not inclusive). 
         z (int): length d generating vector.
+        linear (bool): if True points generated in linear order else in Van der Corput sequence order
     
     Returns:
         ndarray: n samples by d dimensions array of lattice samples
     """
-    m_low = floor(log2(n_min))+1 if n_min > 0 else 0
-    m_high = ceil(log2(n_max))
-    x_lat_full = vstack([gen_block(m,z) for m in range(int(m_low),int(m_high)+1)])
-    cut1 = int(floor(n_min-2**(m_low-1))) if n_min>0 else 0
-    cut2 = int(cut1+n_max-n_min)
-    x_lat = x_lat_full[cut1:cut2,:]
+
+    nelem = n_max - n_min
+    if linear:
+        if n_min == 0:
+            y = arange(0, 1, 1 / nelem).reshape((nelem, 1))
+        else:
+            y = arange(1 / n_max, 1, 2 / n_max).reshape((nelem, 1))
+        x_lat = outer(y, z) % 1
+    else:
+        m_low = floor(log2(n_min)) + 1 if n_min > 0 else 0
+        m_high = ceil(log2(n_max))
+        x_lat_full = vstack([gen_block(m, z) for m in range(int(m_low), int(m_high) + 1)])
+        cut1 = int(floor(n_min - 2 ** (m_low - 1))) if n_min > 0 else 0
+        cut2 = int(cut1 + n_max - n_min)
+        x_lat = x_lat_full[cut1:cut2, :]
     return x_lat

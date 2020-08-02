@@ -66,7 +66,7 @@ class Lattice(DiscreteDistribution):
 
     parameters = ['dimension','randomize','seed','backend','mimics']
 
-    def __init__(self, dimension=1, randomize=True, seed=None, backend='GAIL', gen_vector_info=None):
+    def __init__(self, dimension=1, randomize=True, seed=None, backend='GAIL', gen_vector_info=None, linear=False):
         """
         Args:
             dimension (int): dimension of samples
@@ -107,7 +107,8 @@ class Lattice(DiscreteDistribution):
         self.seed = seed
         self.mimics = 'StdUniform'
         self.set_seed(self.seed)
-        super(Lattice, self).__init__()
+        self.linear = linear
+        super(Lattice,self).__init__()
 
     def gen_samples(self, n=None, n_min=0, n_max=8, warn=True):
         """
@@ -134,7 +135,7 @@ class Lattice(DiscreteDistribution):
             warnings.warn("Non-randomized lattice sequence includes the origin",ParameterWarning)
         if n_max > self.n_global_max:
             raise ParameterError('Lattice generating vector supports up to %d samples.'%self.n_global_max)
-        x_lat = self.backend_gen(n_min,n_max,self.dimension,self.gen_vec[:self.dimension])
+        x_lat = self.backend_gen(n_min,n_max,self.dimension,self.gen_vec[:self.dimension],linear=self.linear)
         if self.randomize: # apply random shift to samples
             x_lat = (x_lat + self.shift)%1
         return x_lat
